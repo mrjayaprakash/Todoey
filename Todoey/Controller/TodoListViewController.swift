@@ -20,18 +20,6 @@ class TodoListViewController: UITableViewController {
         
         print(FileManager.default.urls(for: .documentDirectory, in : .userDomainMask))
         loadItems()
-//        let item = Item()
-//        item.title = "Item1"
-//        itemArray.append(item)
-//        
-//        let item2 = Item()
-//        item2.title = "Item2"
-//        itemArray.append(item2)
-//        if let item = UserDefaults.standard.array(forKey: "TodoListArray") as? [Item]{
-//            itemArray = item
-//        }
-
-
     }
 
     // MARK: - Table view data source
@@ -94,14 +82,39 @@ class TodoListViewController: UITableViewController {
         }
         tableView.reloadData()
     }
-    func loadItems()
+    
+    func loadItems(with request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest())
     {
-        let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
         do{
           itemArray =  try context.fetch(request)
         }
         catch{
             print("Error fetching data from context \(error)")
+        }
+        tableView.reloadData()
+    }
+    
+}
+
+//MARK: - SEARCH BAR METHODS
+extension TodoListViewController: UISearchBarDelegate{
+    
+    func searchBarSearchButtonClicked(_ searchBar: UISearchBar) {
+        
+        let request: NSFetchRequest<TodoItem> = TodoItem.fetchRequest()
+        request.predicate = NSPredicate(format: "title CONTAINS[cd] %@", searchBar.text!)
+        request.sortDescriptors = [NSSortDescriptor(key: "title", ascending: true)]
+        loadItems(with: request)
+        
+    }
+    
+    func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
+        if searchBar.text?.count == 0 {
+            loadItems()
+            DispatchQueue.main.async {
+                searchBar.resignFirstResponder()
+                
+            }
         }
     }
 }
